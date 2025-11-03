@@ -11,17 +11,11 @@ let
 
   inherit (final) _cuda;
 
-  # Since Jetson capabilities are never built by default, we can check if any of them were requested
-  # through final.config.cudaCapabilities and use that to determine if we should change some manifest versions.
-  # Copied from backendStdenv.
-  jetsonCudaCapabilities = filter
-    (
-      cudaCapability: _cuda.db.cudaCapabilityToInfo.${cudaCapability}.isJetson
-    )
-    _cuda.db.allSortedCudaCapabilities;
-  hasJetsonCudaCapability =
-    intersectLists jetsonCudaCapabilities (final.config.cudaCapabilities or [ ]) != [ ];
-  redistSystem = _cuda.lib.getRedistSystem hasJetsonCudaCapability final.stdenv.hostPlatform.system;
+  redistSystem = _cuda.lib.getRedistSystem {
+    cudaCapabilities = final.config.cudaCapabilities;
+    cudaMajorMinorVersion = final.cudaPackages.cudaMajorMinorVersion;
+    system = final.stdenv.hostPlatform.system;
+  };
 in
 {
   nvidia-jetpack5 = import ./mk-overlay.nix
